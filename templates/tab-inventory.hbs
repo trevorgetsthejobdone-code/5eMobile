@@ -1,0 +1,80 @@
+<div class="inventory-tab">
+  {{!-- Container Filter --}}
+  <div class="filter-pills">
+    {{#each inventory.containers}}
+    <button class="filter-pill" 
+            data-filter-type="container" 
+            data-filter-value="{{this}}">{{this}}</button>
+    {{/each}}
+  </div>
+
+  {{!-- Item Type Filter --}}
+  <div class="filter-pills secondary">
+    {{#each inventory.itemTypes}}
+    <button class="filter-pill" 
+            data-filter-type="itemType" 
+            data-filter-value="{{this}}">{{this}}</button>
+    {{/each}}
+  </div>
+
+  {{!-- Attuned Items Section --}}
+  {{#if inventory.attunedItems}}
+  <div class="attuned-section">
+    <h4>Attuned ({{inventory.attunementSlots.current}}/{{inventory.attunementSlots.max}})</h4>
+    {{#each inventory.attunedItems}}
+    <div class="attuned-item">
+      <span>{{this.name}}</span>
+      <button class="attune-btn" data-item-id="{{this.id}}">
+        <i class="fas fa-times"></i> Unattune
+      </button>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{!-- Item List Header --}}
+  <div class="item-list-header">
+    <div class="header-col equip-col">Eqp</div>
+    <div class="header-col name-col">Name</div>
+    <div class="header-col weight-col">Wt</div>
+  </div>
+
+  {{!-- Item List --}}
+  <div class="item-list">
+    {{#each inventory.items}}
+    {{#if (or (eq ../filters.inventoryContainer 'All') (eq ../filters.inventoryContainer this._normalizedContainer))}}
+    {{#if (or (eq ../filters.inventoryType 'all') (eq ../filters.inventoryType this.type))}}
+    <div class="item-row" data-item-id="{{this.id}}">
+      {{!-- Equip Toggle / Use Button --}}
+      <div class="item-col equip-col">
+        {{#if (or (eq this.type 'weapon') (eq this.type 'armor') (eq this.type 'equipment'))}}
+        <button class="item-toggle {{#if this.system.equipped}}equipped{{/if}}" 
+                data-item-id="{{this.id}}">
+          <i class="fas fa-tshirt"></i>
+        </button>
+        {{else if (eq this.type 'consumable')}}
+        <button class="use-item-btn" data-item-id="{{this.id}}">
+          <i class="fas fa-flask"></i>
+        </button>
+        {{else}}
+        <div class="item-col-spacer"></div>
+        {{/if}}
+      </div>
+
+      {{!-- Item Name --}}
+      <div class="item-col name-col item-name" data-item-id="{{this.id}}">
+        <span class="item-name-text">{{this.name}} {{#if (gt this.system.quantity 1)}}({{this.system.quantity}}){{/if}}</span>
+        {{#if (and this.system.attunement (eq this.system.attunement 0) this.system.equipped)}}
+        <button class="attune-btn" data-item-id="{{this.id}}">Attune</button>
+        {{/if}}
+      </div>
+
+      {{!-- Weight --}}
+      <div class="item-col weight-col">{{this.system.weight}}</div>
+    </div>
+    {{/if}}
+    {{/if}}
+    {{/each}}
+  </div>
+</div>
+

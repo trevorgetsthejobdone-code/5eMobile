@@ -1,0 +1,127 @@
+<header class="persistent-header">
+  {{!-- Identity Section --}}
+  <div class="header-identity">
+    <div class="character-icon">
+      <img src="{{header.img}}" alt="{{header.name}}" />
+    </div>
+    <div class="character-info">
+      <div class="character-name">{{header.name}}</div>
+      <div class="character-details">Lv {{header.level}} • {{header.class}} • {{header.gender}}</div>
+    </div>
+  </div>
+
+  {{!-- Main Stats Strip --}}
+  <div class="header-stats">
+    {{!-- Proficiency Bonus --}}
+    <div class="header-stat">
+      <span class="header-value">{{header.pb}}</span>
+      <span class="header-label">PB</span>
+    </div>
+
+    {{!-- Saves Button --}}
+    <div class="header-stat header-popover-btn" data-popover="saves">
+      <span class="header-value"><i class="fas fa-shield-alt"></i></span>
+      <span class="header-label">Saves</span>
+    </div>
+
+    {{!-- AC --}}
+    <div class="header-stat">
+      <span class="header-value">{{header.ac}}</span>
+      <span class="header-label">AC</span>
+    </div>
+
+    {{!-- HP (Clickable) --}}
+    <div class="header-stat hp-display" style="cursor: pointer;">
+      <span class="header-value {{#if header.hp.isBloodied}}bloodied{{/if}}">
+        {{header.hp.current}}/{{header.hp.max}}
+      </span>
+      <span class="header-label">HP</span>
+    </div>
+
+    {{!-- Initiative --}}
+    <div class="header-stat">
+      <span class="header-value">{{header.init}}</span>
+      <span class="header-label">Init</span>
+    </div>
+
+    {{!-- Heroic Inspiration --}}
+    <div class="header-stat inspiration-toggle" style="cursor: pointer;">
+      <span class="header-value">
+        <i class="fas fa-bolt {{#if header.inspiration}}active{{/if}}"></i>
+      </span>
+      <span class="header-label">Insp</span>
+    </div>
+
+    {{!-- Resistances (Inline) --}}
+    {{#if header.resistances}}
+    <div class="header-resistances">
+      {{#each header.resistances}}
+      <span class="resistance-tag">{{this}}</span>
+      {{/each}}
+    </div>
+    {{/if}}
+
+    {{!-- Senses Button --}}
+    <div class="header-stat header-popover-btn" data-popover="senses">
+      <span class="header-value"><i class="fas fa-eye"></i></span>
+      <span class="header-label">Senses</span>
+    </div>
+
+    {{!-- Conditions Button --}}
+    <div class="header-stat header-popover-btn" data-popover="conditions">
+      <span class="header-value"><i class="fas fa-skull-crossbones"></i></span>
+      <span class="header-label">Cond</span>
+    </div>
+  </div>
+
+  {{!-- Sync Status Indicator --}}
+  <div class="header-stat sync-status" id="sync-status" title="5eMobile Sync Status">
+    <span class="header-value">
+      <i class="fas fa-mobile-screen-button" id="sync-status-icon"></i>
+    </span>
+    <span class="header-label">Sync</span>
+  </div>
+
+  {{!-- Rest Button --}}
+  <button id="rest-btn" class="rest-button">
+    <i class="fas fa-bed"></i>
+  </button>
+
+  {{!-- Popovers Container --}}
+  <div class="header-popovers">
+    {{!-- Saves Popover --}}
+    <div id="saves-popover" class="header-popover hidden">
+      <h4>Saving Throws</h4>
+      {{#each header.saves}}
+      <div class="popover-item">
+        <span class="popover-label">{{this.label}}</span>
+        <span class="popover-value">{{this.mod}}</span>
+      </div>
+      {{/each}}
+      <button class="popover-close">Close</button>
+    </div>
+
+    {{!-- Senses Popover --}}
+    <div id="senses-popover" class="header-popover hidden">
+      <h4>Senses</h4>
+      {{#each header.senses}}
+      <div class="popover-item">{{this}}</div>
+      {{/each}}
+      <button class="popover-close">Close</button>
+    </div>
+
+    {{!-- Conditions Popover --}}
+    <div id="conditions-popover" class="header-popover hidden">
+      <h4>Conditions</h4>
+      {{#if header.conditions}}
+        {{#each header.conditions}}
+        <div class="popover-item condition">{{this}}</div>
+        {{/each}}
+      {{else}}
+        <div class="popover-item">None</div>
+      {{/if}}
+      <button class="popover-close">Close</button>
+    </div>
+  </div>
+</header>
+

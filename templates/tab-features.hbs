@@ -1,0 +1,23 @@
+<div class="features-tab">
+  {{#each features.features}}
+  <div class="feature-item">
+    <div class="feature-header">
+      <span class="feature-name">{{this.name}}</span>
+      {{#if this.system.uses}}
+      <span class="feature-uses">
+        Uses: {{this.system.uses.value}}/{{this.system.uses.max}}
+      </span>
+      {{/if}}
+    </div>
+    {{#if this.system.description.value}}
+    <div class="feature-description">
+      {{this.system.description.value}}
+    </div>
+    {{/if}}
+    {{#if this.system.uses}}
+    <button class="use-feature-btn" data-item-id="{{this.id}}">Use</button>
+    {{/if}}
+  </div>
+  {{/each}}
+</div>
+

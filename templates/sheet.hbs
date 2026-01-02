@@ -1,0 +1,86 @@
+<div class="mobile-sheet-container" data-application-part="content">
+  {{!-- Persistent Header --}}
+  {{> 5eMobile.header}}
+
+  {{!-- Main Body (Book View) --}}
+  <div class="book-body">
+    {{!-- Left Navigation Spine --}}
+    <nav class="nav-spine nav-spine-left">
+      <button class="v-tab-btn {{#if (eq leftActiveTab 'actions')}}active{{/if}}" 
+              data-panel="left" data-tab="actions">
+        <i class="fas fa-fist-raised"></i>
+        <span>Actions</span>
+      </button>
+      <button class="v-tab-btn {{#if (eq leftActiveTab 'inventory')}}active{{/if}}" 
+              data-panel="left" data-tab="inventory">
+        <i class="fas fa-suitcase"></i>
+        <span>Inv</span>
+      </button>
+    </nav>
+
+    {{!-- Left Panel --}}
+    <div class="panel panel-left page-shadow-left">
+      <div class="panel-content">
+        {{#if (eq leftActiveTab 'actions')}}
+          {{> 5eMobile.tab-actions}}
+        {{else if (eq leftActiveTab 'inventory')}}
+          {{> 5eMobile.tab-inventory}}
+        {{/if}}
+      </div>
+      <div id="left-overlay" class="overlay hidden"></div>
+    </div>
+
+    {{!-- Book Spine --}}
+    <div class="book-spine"></div>
+
+    {{!-- Right Panel --}}
+    <div class="panel panel-right page-shadow-right">
+      <div class="panel-content">
+        {{#if (eq rightActiveTab 'bio')}}
+          {{> 5eMobile.tab-bio}}
+        {{else if (eq rightActiveTab 'features')}}
+          {{> 5eMobile.tab-features}}
+        {{/if}}
+      </div>
+      <div id="right-overlay" class="overlay hidden"></div>
+    </div>
+
+    {{!-- Right Navigation Spine --}}
+    <nav class="nav-spine nav-spine-right">
+      <button class="v-tab-btn v-tab-btn-right {{#if (eq rightActiveTab 'bio')}}active{{/if}}" 
+              data-panel="right" data-tab="bio">
+        <i class="fas fa-book-open"></i>
+        <span>Bio</span>
+      </button>
+      <button class="v-tab-btn v-tab-btn-right {{#if (eq rightActiveTab 'features')}}active{{/if}}" 
+              data-panel="right" data-tab="features">
+        <i class="fas fa-star"></i>
+        <span>Feats</span>
+      </button>
+    </nav>
+  </div>
+
+  {{!-- Rest Modal --}}
+  <div id="rest-modal" class="global-modal hidden">
+    <div class="modal-content">
+      <h2>Rest</h2>
+      <div class="rest-options">
+        <div class="rest-option">
+          <h3>Short Rest</h3>
+          <p>Spend Hit Dice to recover HP.</p>
+          <div class="hit-dice-display">
+            <span>Hit Dice: <span id="hd-count">{{actor.system.attributes.hd.value}}/{{actor.system.attributes.hd.max}}</span></span>
+            <button class="roll-hd-btn">Roll HD</button>
+          </div>
+        </div>
+        <div class="rest-option">
+          <h3>Long Rest</h3>
+          <p>Recover all HP, HD, and Spell Slots.</p>
+          <button class="long-rest-btn">Take Long Rest</button>
+        </div>
+      </div>
+      <button class="modal-close">Cancel</button>
+    </div>
+  </div>
+</div>
+

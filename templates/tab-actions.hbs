@@ -1,0 +1,77 @@
+<div class="actions-tab">
+  {{!-- Filter Pills & Spell Manager --}}
+  <div class="actions-header">
+    <div class="filter-pills">
+      <button class="filter-pill {{#if (eq filters.actionType 'all')}}active{{/if}}" 
+              data-filter-type="action" data-filter-value="all">All</button>
+      <button class="filter-pill {{#if (eq filters.actionType 'action')}}active{{/if}}" 
+              data-filter-type="action" data-filter-value="action">Action</button>
+      <button class="filter-pill {{#if (eq filters.actionType 'bonus')}}active{{/if}}" 
+              data-filter-type="action" data-filter-value="bonus">Bonus</button>
+      <button class="filter-pill {{#if (eq filters.actionType 'reaction')}}active{{/if}}" 
+              data-filter-type="action" data-filter-value="reaction">Reaction</button>
+      <button class="filter-pill {{#if (eq filters.actionType 'free')}}active{{/if}}" 
+              data-filter-type="action" data-filter-value="free">Free</button>
+      <button class="filter-pill {{#if (eq filters.actionType 'limited')}}active{{/if}}" 
+              data-filter-type="action" data-filter-value="limited">Limited</button>
+    </div>
+    <button class="spell-manager-btn">
+      <i class="fas fa-book-medical"></i> Spells
+    </button>
+  </div>
+
+  {{!-- Attacks Section --}}
+  {{#if (or (eq filters.actionType 'all') (eq filters.actionType 'action'))}}
+  {{#if actions.weapons}}
+  <div class="section">
+    <h3 class="section-title">Attacks</h3>
+    {{#each actions.weapons}}
+    <div class="item-row weapon-row" data-item-id="{{this.id}}">
+      <div class="weapon-name">{{this.name}}</div>
+      <div class="weapon-details">
+        <span><i class="fas fa-crosshairs"></i> {{this.system.range.value}}</span>
+        <span class="to-hit">d20{{this.labels.toHit}}</span>
+        <span class="damage">{{this.labels.damage}}</span>
+      </div>
+      <button class="weapon-roll" data-item-id="{{this.id}}">Roll</button>
+    </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  {{!-- Basic Actions --}}
+  <div class="section">
+    <h3 class="section-title">Basic Actions</h3>
+    <div class="basic-actions-grid">
+      {{#each actions.basicActions}}
+      <button class="basic-action-btn">{{this}}</button>
+      {{/each}}
+    </div>
+  </div>
+  {{/if}}
+
+  {{!-- Spells Section --}}
+  {{#each actions.spellsByLevel}}
+  <div class="section">
+    <div class="spell-level-header">
+      <h3 class="section-title">{{this.label}}</h3>
+      {{#if this.slots.max}}
+      <div class="spell-slots">Slots: {{this.slots.current}}/{{this.slots.max}}</div>
+      {{/if}}
+    </div>
+    {{#each this.spells}}
+    <div class="spell-row">
+      <div class="spell-name" data-item-id="{{this.id}}">
+        <div class="spell-name-text">{{this.name}}</div>
+        <div class="spell-meta">{{this.system.time.value}} • {{this.system.range.value}}</div>
+      </div>
+      {{#if (gt this.system.level 0)}}
+      <button class="spell-cast {{#if (eq ../slots.current 0)}}disabled{{/if}}" 
+              data-item-id="{{this.id}}">Cast</button>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+  {{/each}}
+</div>
+

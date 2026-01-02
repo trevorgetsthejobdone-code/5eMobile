@@ -1,0 +1,533 @@
+{
+  "version": "1.0.0",
+  "source": "SRD 5.1",
+  "categorized": "2026-01-01T04:04:52.630Z",
+  "categories": {
+    "abilityScores": {
+      "name": "Ability Score Modifiers",
+      "spells": [
+        {
+          "id": "9eOZDBImVKxbeOyZ",
+          "name": "Enhance\n        Ability",
+          "uuid": "Compendium.dnd5e.spells.Item.9eOZDBImVKxbeOyZ",
+          "effects": [
+            "ability_check_advantage",
+            "ability_score_bonus"
+          ]
+        },
+        {
+          "id": "6HEEhLdJz32TL4Js",
+          "name": "Foresight",
+          "uuid": "Compendium.dnd5e.spells.Item.6HEEhLdJz32TL4Js",
+          "effects": [
+            "ability_check_advantage"
+          ]
+        },
+        {
+          "id": "P7mF2MxSuVJwHRRY",
+          "name": "Guidance",
+          "uuid": "Compendium.dnd5e.spells.Item.P7mF2MxSuVJwHRRY",
+          "effects": [
+            "ability_check_bonus"
+          ]
+        },
+        {
+          "id": "dl8YwvMboBqX2OC4",
+          "name": "Resistance",
+          "uuid": "Compendium.dnd5e.spells.Item.dl8YwvMboBqX2OC4",
+          "effects": [
+            "saving_throw_bonus"
+          ]
+        },
+        {
+          "id": "8dzaICjGy6mTUaUr",
+          "name": "Bless",
+          "uuid": "Compendium.dnd5e.spells.Item.8dzaICjGy6mTUaUr",
+          "effects": [
+            "attack_roll_bonus",
+            "saving_throw_bonus"
+          ]
+        },
+        {
+          "id": "95K2aUhAGV9qXjnf",
+          "name": "Bane",
+          "uuid": "Compendium.dnd5e.spells.Item.95K2aUhAGV9qXjnf",
+          "effects": [
+            "attack_roll_penalty",
+            "saving_throw_penalty"
+          ]
+        },
+        {
+          "id": "pO4zGe5LmFIYqJiL",
+          "name": "Bestow\n        Curse",
+          "uuid": "Compendium.dnd5e.spells.Item.pO4zGe5LmFIYqJiL",
+          "effects": [
+            "ability_score_penalty"
+          ]
+        },
+        {
+          "id": "hYCrN82dMJFuJODB",
+          "name": "Feeblemind",
+          "uuid": "Compendium.dnd5e.spells.Item.hYCrN82dMJFuJODB",
+          "effects": [
+            "intelligence_reduction"
+          ]
+        },
+        {
+          "id": "04nMsTWkIFvkbXlY",
+          "name": "Polymorph",
+          "uuid": "Compendium.dnd5e.spells.Item.04nMsTWkIFvkbXlY",
+          "effects": [
+            "ability_score_replacement"
+          ]
+        },
+        {
+          "id": "QbQZKoXOgHWN06aa",
+          "name": "True\n        Polymorph",
+          "uuid": "Compendium.dnd5e.spells.Item.QbQZKoXOgHWN06aa",
+          "effects": [
+            "ability_score_replacement"
+          ]
+        },
+        {
+          "id": "N2UEFq8X5LRsLcOZ",
+          "name": "Shapechange",
+          "uuid": "Compendium.dnd5e.spells.Item.N2UEFq8X5LRsLcOZ",
+          "effects": [
+            "ability_score_replacement"
+          ]
+        },
+        {
+          "id": "ODhLKBxLnvvLOnw1",
+          "name": "Ray of\n        Enfeeblement",
+          "uuid": "Compendium.dnd5e.spells.Item.ODhLKBxLnvvLOnw1",
+          "effects": [
+            "strength_penalty"
+          ]
+        }
+      ]
+    },
+    "ac": {
+      "name": "AC Modifiers",
+      "spells": [
+        {
+          "id": "CKZTpZlxj7hjjo2H",
+          "name": "Mage Armor",
+          "uuid": "Compendium.dnd5e.spells.Item.CKZTpZlxj7hjjo2H",
+          "effects": [
+            "ac_bonus"
+          ]
+        },
+        {
+          "id": "JPwIEfgUPVebr5AH",
+          "name": "Barkskin",
+          "uuid": "Compendium.dnd5e.spells.Item.JPwIEfgUPVebr5AH",
+          "effects": [
+            "ac_minimum"
+          ]
+        },
+        {
+          "id": "z1mx84ONwkXKUZd7",
+          "name": "Shield",
+          "uuid": "Compendium.dnd5e.spells.Item.z1mx84ONwkXKUZd7",
+          "effects": [
+            "ac_bonus_reaction"
+          ]
+        },
+        {
+          "id": "jZ6JNykRtdQ90MOo",
+          "name": "Shield of\n        Faith",
+          "uuid": "Compendium.dnd5e.spells.Item.jZ6JNykRtdQ90MOo",
+          "effects": [
+            "ac_bonus"
+          ]
+        },
+        {
+          "id": "Szvk5FEVQW3uhJi5",
+          "name": "Haste",
+          "uuid": "Compendium.dnd5e.spells.Item.Szvk5FEVQW3uhJi5",
+          "effects": [
+            "ac_bonus"
+          ]
+        },
+        {
+          "id": "yqUDoxk4x0NWG5Bz",
+          "name": "Slow",
+          "uuid": "Compendium.dnd5e.spells.Item.yqUDoxk4x0NWG5Bz",
+          "effects": [
+            "ac_penalty"
+          ]
+        },
+        {
+          "id": "xmDBqZhRVrtLP8h2",
+          "name": "Protection from\n        Evil and Good",
+          "uuid": "Compendium.dnd5e.spells.Item.xmDBqZhRVrtLP8h2",
+          "effects": [
+            "ac_bonus_conditional"
+          ]
+        }
+      ]
+    },
+    "speed": {
+      "name": "Speed/Movement Modifiers",
+      "spells": [
+        {
+          "id": "Szvk5FEVQW3uhJi5",
+          "name": "Haste",
+          "uuid": "Compendium.dnd5e.spells.Item.Szvk5FEVQW3uhJi5",
+          "effects": [
+            "speed_multiplier"
+          ]
+        },
+        {
+          "id": "yqUDoxk4x0NWG5Bz",
+          "name": "Slow",
+          "uuid": "Compendium.dnd5e.spells.Item.yqUDoxk4x0NWG5Bz",
+          "effects": [
+            "speed_penalty"
+          ]
+        },
+        {
+          "id": "B0pnIcc52O6G8hi8",
+          "name": "Longstrider",
+          "uuid": "Compendium.dnd5e.spells.Item.B0pnIcc52O6G8hi8",
+          "effects": [
+            "speed_bonus"
+          ]
+        },
+        {
+          "id": "zPGohqJRir6MyQ3U",
+          "name": "Expeditious\n        Retreat",
+          "uuid": "Compendium.dnd5e.spells.Item.zPGohqJRir6MyQ3U",
+          "effects": [
+            "dash_bonus_action"
+          ]
+        },
+        {
+          "id": "da0a1t2FqaTjRZGT",
+          "name": "Freedom of\n        Movement",
+          "uuid": "Compendium.dnd5e.spells.Item.da0a1t2FqaTjRZGT",
+          "effects": [
+            "ignore_difficult_terrain"
+          ]
+        },
+        {
+          "id": "yfbK8gZqESlaoY5t",
+          "name": "Fly",
+          "uuid": "Compendium.dnd5e.spells.Item.yfbK8gZqESlaoY5t",
+          "effects": [
+            "fly_speed"
+          ]
+        },
+        {
+          "id": "YBda6nLKjxdT1LbS",
+          "name": "Water Walk",
+          "uuid": "Compendium.dnd5e.spells.Item.YBda6nLKjxdT1LbS",
+          "effects": [
+            "water_walk"
+          ]
+        },
+        {
+          "id": "KJRVzeMQXPj8Gtyx",
+          "name": "Spider\n        Climb",
+          "uuid": "Compendium.dnd5e.spells.Item.KJRVzeMQXPj8Gtyx",
+          "effects": [
+            "climb_speed"
+          ]
+        },
+        {
+          "id": "8PJAsHmbu6UgDHC0",
+          "name": "Wind Walk",
+          "uuid": "Compendium.dnd5e.spells.Item.8PJAsHmbu6UgDHC0",
+          "effects": [
+            "fly_speed"
+          ]
+        }
+      ]
+    },
+    "hp": {
+      "name": "HP Modifiers",
+      "spells": [
+        {
+          "id": "Opwh2PdX4runSBlm",
+          "name": "Aid",
+          "uuid": "Compendium.dnd5e.spells.Item.Opwh2PdX4runSBlm",
+          "effects": [
+            "max_hp_increase"
+          ]
+        },
+        {
+          "id": "7e3QXF10hLNDEdr6",
+          "name": "False Life",
+          "uuid": "Compendium.dnd5e.spells.Item.7e3QXF10hLNDEdr6",
+          "effects": [
+            "temporary_hp"
+          ]
+        },
+        {
+          "id": "ge3Saet9zPTDyaoL",
+          "name": "Heroism",
+          "uuid": "Compendium.dnd5e.spells.Item.ge3Saet9zPTDyaoL",
+          "effects": [
+            "temporary_hp_per_turn"
+          ]
+        },
+        {
+          "id": "UfHQhA54M4323gVO",
+          "name": "Vampiric\n        Touch",
+          "uuid": "Compendium.dnd5e.spells.Item.UfHQhA54M4323gVO",
+          "effects": [
+            "heal_on_damage"
+          ]
+        },
+        {
+          "id": "9kGrFXnLiRg3Xnbo",
+          "name": "Regenerate",
+          "uuid": "Compendium.dnd5e.spells.Item.9kGrFXnLiRg3Xnbo",
+          "effects": [
+            "hp_regeneration"
+          ]
+        }
+      ]
+    },
+    "savingThrows": {
+      "name": "Saving Throw Modifiers",
+      "spells": [
+        {
+          "id": "8dzaICjGy6mTUaUr",
+          "name": "Bless",
+          "uuid": "Compendium.dnd5e.spells.Item.8dzaICjGy6mTUaUr",
+          "effects": [
+            "saving_throw_bonus"
+          ]
+        },
+        {
+          "id": "95K2aUhAGV9qXjnf",
+          "name": "Bane",
+          "uuid": "Compendium.dnd5e.spells.Item.95K2aUhAGV9qXjnf",
+          "effects": [
+            "saving_throw_penalty"
+          ]
+        },
+        {
+          "id": "dl8YwvMboBqX2OC4",
+          "name": "Resistance",
+          "uuid": "Compendium.dnd5e.spells.Item.dl8YwvMboBqX2OC4",
+          "effects": [
+            "saving_throw_bonus"
+          ]
+        },
+        {
+          "id": "Szvk5FEVQW3uhJi5",
+          "name": "Haste",
+          "uuid": "Compendium.dnd5e.spells.Item.Szvk5FEVQW3uhJi5",
+          "effects": [
+            "dex_save_advantage"
+          ]
+        },
+        {
+          "id": "xmDBqZhRVrtLP8h2",
+          "name": "Protection from\n        Evil and Good",
+          "uuid": "Compendium.dnd5e.spells.Item.xmDBqZhRVrtLP8h2",
+          "effects": [
+            "saving_throw_advantage"
+          ]
+        },
+        {
+          "id": "bllEWfm9xfEKynhv",
+          "name": "Mind Blank",
+          "uuid": "Compendium.dnd5e.spells.Item.bllEWfm9xfEKynhv",
+          "effects": [
+            "saving_throw_immunity"
+          ]
+        },
+        {
+          "id": "VtCXMdyM6mAdIJZb",
+          "name": "Death Ward",
+          "uuid": "Compendium.dnd5e.spells.Item.VtCXMdyM6mAdIJZb",
+          "effects": [
+            "death_save_auto_success"
+          ]
+        }
+      ]
+    },
+    "skillChecks": {
+      "name": "Skill Check Modifiers",
+      "spells": [
+        {
+          "id": "P7mF2MxSuVJwHRRY",
+          "name": "Guidance",
+          "uuid": "Compendium.dnd5e.spells.Item.P7mF2MxSuVJwHRRY",
+          "effects": [
+            "ability_check_bonus"
+          ]
+        },
+        {
+          "id": "9eOZDBImVKxbeOyZ",
+          "name": "Enhance\n        Ability",
+          "uuid": "Compendium.dnd5e.spells.Item.9eOZDBImVKxbeOyZ",
+          "effects": [
+            "ability_check_advantage"
+          ]
+        },
+        {
+          "id": "6HEEhLdJz32TL4Js",
+          "name": "Foresight",
+          "uuid": "Compendium.dnd5e.spells.Item.6HEEhLdJz32TL4Js",
+          "effects": [
+            "ability_check_advantage"
+          ]
+        },
+        {
+          "id": "pRMvmknwLf2tdMTj",
+          "name": "Pass without\n        Trace",
+          "uuid": "Compendium.dnd5e.spells.Item.pRMvmknwLf2tdMTj",
+          "effects": [
+            "stealth_bonus"
+          ]
+        }
+      ]
+    },
+    "attackRolls": {
+      "name": "Attack Roll Modifiers",
+      "spells": [
+        {
+          "id": "8dzaICjGy6mTUaUr",
+          "name": "Bless",
+          "uuid": "Compendium.dnd5e.spells.Item.8dzaICjGy6mTUaUr",
+          "effects": [
+            "attack_roll_bonus"
+          ]
+        },
+        {
+          "id": "95K2aUhAGV9qXjnf",
+          "name": "Bane",
+          "uuid": "Compendium.dnd5e.spells.Item.95K2aUhAGV9qXjnf",
+          "effects": [
+            "attack_roll_penalty"
+          ]
+        },
+        {
+          "id": "mGGlcLdggHwcL7MG",
+          "name": "True Strike",
+          "uuid": "Compendium.dnd5e.spells.Item.mGGlcLdggHwcL7MG",
+          "effects": [
+            "attack_advantage"
+          ]
+        },
+        {
+          "id": "nqBDWkVOfcGZt4YU",
+          "name": "Faerie Fire",
+          "uuid": "Compendium.dnd5e.spells.Item.nqBDWkVOfcGZt4YU",
+          "effects": [
+            "attack_advantage_vs_target"
+          ]
+        },
+        {
+          "id": "7buEm5KhI5lP8m1z",
+          "name": "Guiding\n        Bolt",
+          "uuid": "Compendium.dnd5e.spells.Item.7buEm5KhI5lP8m1z",
+          "effects": [
+            "attack_advantage_vs_target"
+          ]
+        }
+      ]
+    },
+    "damage": {
+      "name": "Damage Modifiers",
+      "spells": [
+        {
+          "id": "0xmXiPiuYws1OGcX",
+          "name": "Hunter's\n        Mark",
+          "uuid": "Compendium.dnd5e.spells.Item.0xmXiPiuYws1OGcX",
+          "effects": [
+            "damage_bonus"
+          ]
+        },
+        {
+          "id": "Sgjrf8qqv97CCWM4",
+          "name": "Magic\n        Weapon",
+          "uuid": "Compendium.dnd5e.spells.Item.Sgjrf8qqv97CCWM4",
+          "effects": [
+            "attack_bonus",
+            "damage_bonus"
+          ]
+        },
+        {
+          "id": "8MICCMeOXT3aJUy9",
+          "name": "Divine\n        Favor",
+          "uuid": "Compendium.dnd5e.spells.Item.8MICCMeOXT3aJUy9",
+          "effects": [
+            "radiant_damage_bonus"
+          ]
+        }
+      ]
+    },
+    "initiative": {
+      "name": "Initiative Modifiers",
+      "spells": [
+        {
+          "id": "6HEEhLdJz32TL4Js",
+          "name": "Foresight",
+          "uuid": "Compendium.dnd5e.spells.Item.6HEEhLdJz32TL4Js",
+          "effects": [
+            "initiative_advantage"
+          ]
+        }
+      ]
+    },
+    "actionEconomy": {
+      "name": "Action Economy Modifiers",
+      "spells": [
+        {
+          "id": "Szvk5FEVQW3uhJi5",
+          "name": "Haste",
+          "uuid": "Compendium.dnd5e.spells.Item.Szvk5FEVQW3uhJi5",
+          "effects": [
+            "extra_action"
+          ]
+        },
+        {
+          "id": "yqUDoxk4x0NWG5Bz",
+          "name": "Slow",
+          "uuid": "Compendium.dnd5e.spells.Item.yqUDoxk4x0NWG5Bz",
+          "effects": [
+            "action_restriction"
+          ]
+        },
+        {
+          "id": "4smlOvpF5AQHcyg1",
+          "name": "Contingency",
+          "uuid": "Compendium.dnd5e.spells.Item.4smlOvpF5AQHcyg1",
+          "effects": [
+            "reaction_like_ability"
+          ]
+        },
+        {
+          "id": "JYuRBwxpoFhXduvD",
+          "name": "Time Stop",
+          "uuid": "Compendium.dnd5e.spells.Item.JYuRBwxpoFhXduvD",
+          "effects": [
+            "multiple_turns"
+          ]
+        },
+        {
+          "id": "arzCrMRgcNiQuh43",
+          "name": "Command",
+          "uuid": "Compendium.dnd5e.spells.Item.arzCrMRgcNiQuh43",
+          "effects": [
+            "force_action"
+          ]
+        },
+        {
+          "id": "zMAWdyc8UVb37BK4",
+          "name": "Suggestion",
+          "uuid": "Compendium.dnd5e.spells.Item.zMAWdyc8UVb37BK4",
+          "effects": [
+            "force_action"
+          ]
+        }
+      ]
+    }
+  }
+}

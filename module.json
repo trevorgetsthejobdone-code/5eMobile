@@ -1,0 +1,41 @@
+{
+  "id": "5eMobile",
+  "title": "5eMobile",
+  "version": "0.2.0",
+  "description": "Mobile-first character sheet for D&D 5e with split-pane 'Open Book' interface",
+  "manifest": "https://github.com/yourusername/5eMobile/releases/latest/download/module.json",
+  "esmodules": [
+    "scripts/main.js"
+  ],
+  "scripts": [],
+  "styles": [
+    "styles/mobile-sheet.css"
+  ],
+  "compatibility": {
+    "minimum": "11",
+    "verified": "13"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "dnd5e",
+        "type": "system",
+        "manifest": "https://raw.githubusercontent.com/foundryvtt/dnd5e/master/system.json",
+        "compatibility": {
+          "minimum": "4.4.0",
+          "verified": "5.0.2"
+        }
+      }
+    ]
+  },
+  "authors": [
+    {
+      "name": "Tactician",
+      "url": "https://example.com"
+    }
+  ],
+  "url": "https://example.com/5eMobile-sync",
+  "readme": "README.md",
+  "license": "MIT"
+}
+
