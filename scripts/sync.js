@@ -334,6 +334,36 @@ Hooks.on('init', () => {
  */
 let pollingInterval = null;
 
+/**
+ * Rate limiting: Track action frequency per user
+ */
+const rateLimitTracker = new Map();
+const RATE_LIMIT_MAX_ACTIONS = 10;
+const RATE_LIMIT_WINDOW_MS = 1000; // 1 second
+
+/**
+ * Check if user has exceeded rate limit
+ * @param {string} userId - User ID
+ * @returns {boolean} True if rate limit exceeded
+ */
+function checkRateLimit(userId) {
+  const now = Date.now();
+  const userActions = rateLimitTracker.get(userId) || [];
+  
+  // Remove actions outside the time window
+  const recentActions = userActions.filter(timestamp => now - timestamp < RATE_LIMIT_WINDOW_MS);
+  
+  if (recentActions.length >= RATE_LIMIT_MAX_ACTIONS) {
+    return true; // Rate limit exceeded
+  }
+  
+  // Add current action
+  recentActions.push(now);
+  rateLimitTracker.set(userId, recentActions);
+  
+  return false; // Within rate limit
+}
+
 function startActionPolling() {
   const syncUrl = game.settings.get(MODULE_ID, 'syncUrl') || 'http://localhost:3000';
   const pollingIntervalMs = game.settings.get(MODULE_ID, 'pollingInterval') || 2000;
@@ -415,14 +445,20 @@ function startActionPolling() {
 
           // Send result back to Electron app
           if (result && action.actionId) {
-            await fetch(`${syncUrl}/api/action-result`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                actionId: action.actionId,
-                result: result
-              })
-            });
+            const resultData = {
+              type: 'action-result',
+              actionId: action.actionId,
+              result: result
+            };
+            
+            // Try WebSocket first, fall back to HTTP
+            if (!sendWebSocket(resultData)) {
+              await fetch(`${syncUrl}/api/action-result`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(resultData)
+              });
+            }
           }
         } catch (error) {
           handleSyncError(error, {
@@ -431,28 +467,89 @@ function startActionPolling() {
             actionType: action.type
           });
           // Send error result back
-          await fetch(`${syncUrl}/api/action-result`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              actionId: action.actionId,
-              result: { success: false, error: error.message }
-            })
-          });
+          const errorResult = {
+            type: 'action-result',
+            actionId: action.actionId,
+            result: { success: false, error: error.message }
+          };
+          
+          // Try WebSocket first, fall back to HTTP
+          if (!sendWebSocket(errorResult)) {
+            await fetch(`${syncUrl}/api/action-result`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(errorResult)
+            });
+          }
         }
       }
     } catch (error) {
       // Silently fail - Electron app might not be running
       // console.debug(`[${MODULE_ID}] Polling error (expected if Electron app not running):`, error.message);
     }
-  }, pollingIntervalMs);
+    
+    // Adaptive polling: adjust interval based on activity
+    const hadActions = data?.actions?.length > 0;
+    if (hadActions) {
+      consecutiveActivePolls++;
+      consecutiveEmptyPolls = 0;
+      // Speed up if we're getting actions
+      if (consecutiveActivePolls >= MAX_ACTIVE_POLLS && currentPollingInterval > MIN_POLL_INTERVAL) {
+        currentPollingInterval = Math.max(MIN_POLL_INTERVAL, currentPollingInterval - POLL_INTERVAL_STEP);
+        consecutiveActivePolls = 0;
+      }
+    } else {
+      consecutiveEmptyPolls++;
+      consecutiveActivePolls = 0;
+      // Slow down if no actions
+      if (consecutiveEmptyPolls >= MAX_EMPTY_POLLS && currentPollingInterval < MAX_POLL_INTERVAL) {
+        currentPollingInterval = Math.min(MAX_POLL_INTERVAL, currentPollingInterval + POLL_INTERVAL_STEP);
+        consecutiveEmptyPolls = 0;
+      }
+    }
+    
+    // Schedule next poll
+    setTimeout(poll, currentPollingInterval);
+  };
 }
 
+/**
+ * Process actions from polling or WebSocket
+ * @param {Array} actions - Array of actions to process
+ * @param {string} syncUrl - Sync URL
+ */
+async function processActions(actions, syncUrl) {
+  for (const action of actions) {
+    try {
+      // Rate limiting check
+      const userId = action.userId || game.userId || 'unknown';
+      if (checkRateLimit(userId)) {
+        console.warn(`[${MODULE_ID}] Rate limit exceeded for user ${userId}`);
+        // Send rate limit error back
+        const errorResult = {
+          actionId: action.actionId,
+          result: { success: false, error: 'Rate limit exceeded. Please wait before trying again.' }
+        };
+        
+        // Try WebSocket first, fall back to HTTP
+        if (!sendWebSocket({ type: 'action-result', ...errorResult })) {
+          await fetch(`${syncUrl}/api/action-result`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(errorResult)
+          });
+        }
+        continue; // Skip this action
+      }
+      
+      let result = null;
+
 function stopActionPolling() {
-  if (pollingInterval) {
-    clearInterval(pollingInterval);
-    pollingInterval = null;
-  }
+  // Reset adaptive polling state
+  currentPollingInterval = game.settings.get(MODULE_ID, 'pollingInterval') || 2000;
+  consecutiveEmptyPolls = 0;
+  consecutiveActivePolls = 0;
+  pollingInterval = null;
 }
 
 

@@ -226,6 +226,48 @@
   opacity: 0.5;
 }
 
+.sync-loading-spinner {
+  position: absolute;
+  font-size: 0.8rem;
+}
+
+.sync-loading-spinner.hidden {
+  display: none;
+}
+
+.sync-status.sync-syncing .sync-loading-spinner {
+  display: inline-block;
+}
+
+.sync-status.sync-syncing .header-value i:not(.fa-spinner) {
+  opacity: 0.3;
+}
+
+/* Loading states for action buttons */
+.action-loading {
+  opacity: 0.6;
+  pointer-events: none;
+  position: relative;
+}
+
+.action-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border: 2px solid #f3f4f6;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 /* Header Popovers */
 .header-popovers {
   position: absolute;

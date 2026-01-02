@@ -1,6 +1,10 @@
 /**
  * Mobile Actor Sheet for D&D 5e
  * Extends dnd5e's CharacterActorSheet with mobile-optimized interface
+ * 
+ * @class MobileActorSheet5e
+ * @extends {dnd5e.applications.actor.CharacterActorSheet}
+ * @module 5eMobile
  */
 
 import { formatModifier, getProficiencyBonus, getSavingThrowModifier, getPassivePerception, getPassiveInvestigation, getResistances, getActiveConditions } from './utils.js';
@@ -50,10 +54,20 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
 
   /** @override */
   async _prepareContext(options) {
+    // Check cache first
+    const actor = this.actor;
+    const cacheKey = `${actor.id}-${actor.data.updateTime}`;
+    
+    if (this._renderCache.lastContext && 
+        this._renderCache.lastContext._cacheKey === cacheKey &&
+        Date.now() - this._renderCache.lastRenderTime < 100) {
+      // Return cached context if actor hasn't changed and recent render
+      return this._renderCache.lastContext;
+    }
+    
     // Get base context from parent class (which already has all the actor data)
     const context = await super._prepareContext(options);
     
-    const actor = this.actor;
     const system = actor.system;
 
     // Prepare header data
@@ -75,6 +89,11 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
     context.leftActiveTab = this.leftActiveTab;
     context.rightActiveTab = this.rightActiveTab;
     context.filters = this.filters;
+    
+    // Store in cache
+    context._cacheKey = cacheKey;
+    this._renderCache.lastContext = context;
+    this._renderCache.lastRenderTime = Date.now();
 
     return context;
   }
@@ -94,6 +113,9 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
 
   /**
    * Update sync status indicator
+   * Checks server availability and updates UI to show connection status
+   * @private
+   * @returns {Promise<void>}
    */
   async _updateSyncStatus() {
     const syncStatusEl = this.element?.find('#sync-status');
@@ -141,19 +163,37 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
   }
 
   /**
-   * Prepare header data
+   * Prepare header data for template rendering
+   * @private
+   * @param {Object} context - Template context
+   * @param {Actor5e} actor - The actor
+   * @param {Object} system - Actor system data
+   * @returns {Object} Header data object
    */
-  _prepareHeaderData(context, actor, system) {
+  async _prepareHeaderData(context, actor, system) {
     const pb = getProficiencyBonus(system.details.level || 1);
     const hp = system.attributes.hp;
     const isBloodied = hp.value < (hp.max / 2);
     
-    // Prepare saving throws
-    const saves = ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(ability => ({
-      label: ability.toUpperCase(),
-      mod: getSavingThrowModifier(actor, ability),
-      proficient: system.abilities[ability]?.proficient || false
-    }));
+    // Detect spell effects
+    const detector = getSpellEffectDetector();
+    const effects = await detector.detectAllEffects(actor);
+    
+    // Prepare saving throws with effect modifiers
+    const saves = ['str', 'dex', 'con', 'int', 'wis', 'cha'].map(ability => {
+      const baseMod = getSavingThrowModifier(actor, ability);
+      const effectMod = effects.savingThrows[ability] || 0;
+      const totalMod = parseFloat(baseMod.replace('+', '')) + effectMod;
+      const modString = totalMod >= 0 ? `+${totalMod}` : `${totalMod}`;
+      
+      return {
+        label: ability.toUpperCase(),
+        mod: modString,
+        baseMod: baseMod,
+        effectMod: effectMod !== 0 ? (effectMod >= 0 ? `+${effectMod}` : `${effectMod}`) : null,
+        proficient: system.abilities[ability]?.proficient || false
+      };
+    });
 
     // Get resistances
     const resistances = getResistances(actor);
@@ -180,6 +220,24 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
       ? classes.map(c => `${c.name} ${c.system.levels || 1}`).join(' / ')
       : (system.details.class || 'No Class');
 
+    // Calculate modified AC
+    const baseAC = system.attributes.ac.value;
+    const acModifier = effects.ac || 0;
+    const modifiedAC = baseAC + acModifier;
+
+    // Calculate modified HP
+    const hpModifier = effects.hp || 0;
+    const modifiedHP = {
+      current: hp.value,
+      max: hp.max + hpModifier,
+      isBloodied: hp.value < ((hp.max + hpModifier) / 2)
+    };
+
+    // Calculate modified speed
+    const baseSpeed = system.attributes.movement?.walk || 30;
+    const speedEffects = effects.speed || { multiplier: 1, flatBonus: 0 };
+    const modifiedSpeed = Math.floor(baseSpeed * speedEffects.multiplier) + speedEffects.flatBonus;
+
     return {
       name: actor.name,
       img: actor.img,
@@ -188,22 +246,31 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
       gender: system.details.gender || '—',
       pb: `+${pb}`,
       saves: saves,
-      ac: system.attributes.ac.value,
-      hp: {
-        current: hp.value,
-        max: hp.max,
-        isBloodied: isBloodied
-      },
+      ac: modifiedAC,
+      acBase: baseAC,
+      acModifier: acModifier !== 0 ? (acModifier >= 0 ? `+${acModifier}` : `${acModifier}`) : null,
+      hp: modifiedHP,
+      speed: modifiedSpeed,
+      speedBase: baseSpeed,
+      speedModifier: speedEffects.multiplier !== 1 || speedEffects.flatBonus !== 0 
+        ? `${speedEffects.multiplier !== 1 ? `${speedEffects.multiplier}x` : ''}${speedEffects.flatBonus !== 0 ? (speedEffects.flatBonus >= 0 ? `+${speedEffects.flatBonus}` : `${speedEffects.flatBonus}`) : ''}`
+        : null,
       init: formatModifier(system.abilities.dex?.value || 10),
       inspiration: system.attributes.inspiration || false,
       resistances: resistances,
       senses: senses,
-      conditions: conditions
+      conditions: conditions,
+      spellEffects: effects
     };
   }
 
   /**
-   * Prepare actions tab data
+   * Prepare actions tab data for template rendering
+   * @private
+   * @param {Object} context - Template context
+   * @param {Actor5e} actor - The actor
+   * @param {Object} system - Actor system data
+   * @returns {Object} Actions data object with weapons, spells, and basic actions
    */
   _prepareActionsData(context, actor, system) {
     // Get equipped weapons
@@ -248,7 +315,12 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
   }
 
   /**
-   * Prepare inventory tab data
+   * Prepare inventory tab data for template rendering
+   * @private
+   * @param {Object} context - Template context
+   * @param {Actor5e} actor - The actor
+   * @param {Object} system - Actor system data
+   * @returns {Object} Inventory data object with items, containers, and attunement info
    */
   _prepareInventoryData(context, actor, system) {
     const items = actor.items.filter(item => item.type !== 'spell' && item.type !== 'class' && item.type !== 'subclass');
@@ -346,6 +418,7 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
     // Header interactions
     html.find('.header-popover-btn').on('click', this._onHeaderPopover.bind(this));
     html.find('.inspiration-toggle').on('click', this._onToggleInspiration.bind(this));
+    html.find('#sync-log-btn').on('click', this._onSyncLogClick.bind(this));
     
     // Overlay close buttons
     html.find('.overlay-close').on('click', this._onCloseOverlay.bind(this));

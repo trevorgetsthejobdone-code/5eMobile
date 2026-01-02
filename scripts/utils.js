@@ -1,5 +1,6 @@
 /**
  * Utility functions for 5eMobile module
+ * @module utils
  */
 
 /**

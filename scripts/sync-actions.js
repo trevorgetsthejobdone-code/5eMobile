@@ -317,9 +317,18 @@ export async function handleCharacterUpdate(action) {
  */
 export async function handleCharacterCreation(characterData) {
   try {
-    // Check permissions
+    // Enhanced permission checks
+    if (!game.user) {
+      throw new Error('User not authenticated');
+    }
+    
     if (!game.user.isGM && !game.user.hasRole('ASSISTANT')) {
-      throw new Error('No permission to create characters');
+      throw new Error('No permission to create characters. Only GMs and Assistants can create characters.');
+    }
+    
+    // Validate character data
+    if (!characterData || typeof characterData !== 'object') {
+      throw new Error('Invalid character data provided');
     }
 
     // Create actor in Foundry

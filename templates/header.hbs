@@ -78,6 +78,9 @@
   <div class="header-stat sync-status" id="sync-status" title="5eMobile Sync Status">
     <span class="header-value">
       <i class="fas fa-mobile-screen-button" id="sync-status-icon"></i>
+      <span class="sync-loading-spinner hidden" id="sync-loading-spinner">
+        <i class="fas fa-spinner fa-spin"></i>
+      </span>
     </span>
     <span class="header-label">Sync</span>
   </div>
@@ -120,6 +123,15 @@
       {{else}}
         <div class="popover-item">None</div>
       {{/if}}
+      <button class="popover-close">Close</button>
+    </div>
+
+    {{!-- Sync Log Popover --}}
+    <div id="sync-log-popover" class="header-popover hidden">
+      <h4>Sync History</h4>
+      <div id="sync-log-entries" class="sync-log-entries">
+        <div class="popover-item">Loading...</div>
+      </div>
       <button class="popover-close">Close</button>
     </div>
   </div>

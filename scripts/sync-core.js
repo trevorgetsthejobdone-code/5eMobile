@@ -41,11 +41,34 @@ function notifySyncStatus(message, type = 'info') {
 }
 
 /**
+ * Get changed fields between two objects
+ * @param {Object} current - Current object
+ * @param {Object} previous - Previous object
+ * @returns {Object} Object containing only changed fields
+ */
+function getChangedFields(current, previous) {
+  if (!previous) return current; // First sync, send everything
+  
+  const changes = {};
+  
+  // Compare top-level fields
+  for (const key in current) {
+    if (JSON.stringify(current[key]) !== JSON.stringify(previous[key])) {
+      changes[key] = current[key];
+    }
+  }
+  
+  return changes;
+}
+
+/**
  * Convert actor to JSON format for transmission
+ * Sanitizes and serializes actor data for safe transmission to Electron app
  * @param {Actor} actor - Foundry actor object
+ * @param {boolean} sendFull - If true, send full data; if false, only send changes
  * @returns {Object} Serialized actor data
  */
-export function actorToJSON(actor) {
+export function actorToJSON(actor, sendFull = true) {
   const system = {};
   
   // Copy all system properties
@@ -53,26 +76,89 @@ export function actorToJSON(actor) {
     system[key] = actor.system[key];
   });
 
-  return {
+  // Sanitize actor name
+  const sanitizedName = sanitizeString(actor.name || 'Unknown');
+  
+  // Sanitize item names
+  const sanitizedItems = actor.items.map(item => ({
+    id: item.id,
+    name: sanitizeString(item.name || 'Unknown'),
+    type: item.type,
+    img: sanitizeString(item.img || ''),
+    system: item.system
+  }));
+
+  // Sanitize effect names
+  const sanitizedEffects = (actor.effects || []).map(effect => ({
+    id: effect.id,
+    name: sanitizeString(effect.name || 'Unknown'),
+    label: sanitizeString(effect.label || ''),
+    icon: sanitizeString(effect.icon || '')
+  }));
+
+  const fullData = {
     id: actor.id,
-    name: actor.name,
+    name: sanitizedName,
     type: actor.type,
-    img: actor.img,
+    img: sanitizeString(actor.img || ''),
     system: system,
-    items: actor.items.map(item => ({
-      id: item.id,
-      name: item.name,
-      type: item.type,
-      img: item.img,
-      system: item.system
-    })),
-    effects: (actor.effects || []).map(effect => ({
-      id: effect.id,
-      name: effect.name,
-      label: effect.label,
-      icon: effect.icon
-    }))
+    items: sanitizedItems,
+    effects: sanitizedEffects
   };
+
+  // If not sending full data, compare with previous state
+  if (!sendFull) {
+    const previous = previousActorState.get(actor.id);
+    const changes = getChangedFields(fullData, previous);
+    
+    // Update stored state
+    previousActorState.set(actor.id, fullData);
+    
+    // Return only changes, but always include id and type
+    return {
+      id: actor.id,
+      type: actor.type,
+      ...changes
+    };
+  }
+  
+  // Update stored state for future comparisons
+  previousActorState.set(actor.id, fullData);
+  
+  return fullData;
+}
+
+/**
+ * Sanitize string input to prevent XSS and injection attacks
+ * @param {string} str - String to sanitize
+ * @returns {string} Sanitized string
+ */
+function sanitizeString(str) {
+  if (typeof str !== 'string') return '';
+  
+  // Use Foundry's built-in sanitization if available
+  if (typeof foundry?.utils?.sanitize === 'function') {
+    return foundry.utils.sanitize(str);
+  }
+  
+  // Fallback: basic HTML escaping
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/**
+ * Validate numeric value is within bounds
+ * @param {number} value - Value to validate
+ * @param {number} min - Minimum value
+ * @param {number} max - Maximum value
+ * @param {number} defaultValue - Default value if invalid
+ * @returns {number} Validated value
+ */
+function validateNumeric(value, min = -Infinity, max = Infinity, defaultValue = 0) {
+  const num = Number(value);
+  if (isNaN(num)) return defaultValue;
+  return Math.max(min, Math.min(max, num));
 }
 
 /**
@@ -156,19 +242,25 @@ export function sendActor(actor, action = 'update') {
   const owner = getCharacterOwner(actor);
   const syncUrl = game.settings.get(MODULE_ID, 'syncUrl') || 'http://localhost:3000';
 
+  // Validate and sanitize data before sending
+  const payload = {
+    world_id: sanitizeString(game.world.id || ''),
+    character_id: sanitizeString(actor.id || ''),
+    action: sanitizeString(action),
+    data: actorObject,
+    ownerId: owner ? sanitizeString(owner.id || '') : null,
+    owner: owner ? {
+      id: sanitizeString(owner.id || ''),
+      name: sanitizeString(owner.name || 'Unknown User')
+    } : null
+  };
+
   fetch(`${syncUrl}/api/character/update`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      world_id: game.world.id,
-      character_id: actor.id,
-      action: action,
-      data: actorObject,
-      ownerId: owner ? owner.id : null,
-      owner: owner
-    })
+    body: JSON.stringify(payload)
   })
     .then(res => {
       if (!res.ok) {
