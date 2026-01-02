@@ -1,10 +1,10 @@
 {
   "id": "5eMobile",
   "title": "5eMobile",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Mobile-first, full-screen character sheet for D&D 5e with automatic targeting, AOE support, and comprehensive combat automation",
   "manifest": "https://raw.githubusercontent.com/trevorgetsthejobdone-code/5eMobile/main/module.json",
-  "download": "https://github.com/trevorgetsthejobdone-code/5eMobile/releases/download/v0.2.0/5eMobile.zip",
+  "download": "https://github.com/trevorgetsthejobdone-code/5eMobile/releases/download/v0.4.0/5eMobile.zip",
   "esmodules": [
     "scripts/main.js"
   ],
@@ -29,21 +29,19 @@
       }
     ]
   },
+  "system": [
+    "dnd5e"
+  ],
   "authors": [
     {
       "name": "TacticalTrevor",
-      "url": "https://github.com/trevorgetsthejobdone-code",
-      "discord": ""
+      "url": "https://github.com/trevorgetsthejobdone-code"
     }
   ],
   "url": "https://github.com/trevorgetsthejobdone-code/5eMobile",
-  "readme": "https://github.com/trevorgetsthejobdone-code/5eMobile/blob/main/README.md",
+  "readme": "README.md",
   "license": "MIT",
-  "media": [
-    {
-      "type": "cover",
-      "url": ""
-    }
-  ]
+  "bugs": "https://github.com/trevorgetsthejobdone-code/5eMobile/issues",
+  "changelog": "https://github.com/trevorgetsthejobdone-code/5eMobile/releases"
 }
 
