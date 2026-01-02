@@ -1,0 +1,17 @@
+{
+  "name": "5emobile",
+  "version": "1.0.0",
+  "description": "Build scripts for 5eMobile Foundry VTT module",
+  "scripts": {
+    "build": "node build.js",
+    "version:patch": "node -e \"const fs=require('fs');const m=JSON.parse(fs.readFileSync('module.json'));const v=m.version.split('.');v[2]=parseInt(v[2])+1;m.version=v.join('.');m.download=m.download.replace(/v[\\d.]+/,`v${m.version}`);fs.writeFileSync('module.json',JSON.stringify(m,null,2)+'\\n');console.log(m.version);\""
+  },
+  "keywords": [
+    "foundryvtt",
+    "module",
+    "dnd5e"
+  ],
+  "author": "TacticalTrevor",
+  "license": "MIT"
+}
+
