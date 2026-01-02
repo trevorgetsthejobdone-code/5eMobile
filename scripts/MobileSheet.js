@@ -8,6 +8,7 @@
  */
 
 import { formatModifier, getProficiencyBonus, getSavingThrowModifier, getPassivePerception, getPassiveInvestigation, getResistances, getActiveConditions } from './utils.js';
+import { getValidTargets, parseRange, calculateHit, applyDamage, getAOETargets, getActorToken } from './targeting.js';
 
 // Note: This assumes dnd5e.applications.actor.CharacterActorSheet is available
 // It should be, since dnd5e is a system dependency and loads before modules
@@ -619,6 +620,18 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
     const item = actor.items.get(itemId);
     if (!item) return;
 
+    // Check if this is a weapon that requires targeting
+    if (item.type === 'weapon') {
+      const range = parseRange(item.system.range?.value || item.system.range?.long || '');
+      
+      // If weapon has range, show target selection
+      if (range !== null) {
+        await this._showTargetSelection(item, 'attack', range);
+        return;
+      }
+    }
+
+    // Default behavior for non-targeted items
     if (typeof item.roll === 'function') {
       await item.roll();
     }
@@ -634,6 +647,22 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
     const spell = actor.items.get(itemId);
     if (!spell || spell.type !== 'spell') return;
 
+    // Check if spell requires targeting
+    const range = parseRange(spell.system.range?.value || '');
+    const hasTarget = range !== null && range !== 0; // 0 or null means self/touch
+    
+    // Check if spell is AOE
+    const aoeType = spell.system.target?.type || null;
+    const aoeSize = spell.system.target?.value || null;
+    const isAOE = aoeType && aoeSize;
+
+    // If spell requires targeting or is AOE, show target selection
+    if (hasTarget || isAOE) {
+      await this._showTargetSelection(spell, 'spell', range, { isAOE, aoeType, aoeSize });
+      return;
+    }
+
+    // Self/touch spells - proceed normally
     const level = spell.system.level || 0;
     if (level > 0) {
       const slotKey = `spell${level}`;
@@ -860,6 +889,304 @@ export class MobileActorSheet5e extends dnd5e.applications.actor.CharacterActorS
   _onCloseOverlay(event) {
     event.preventDefault();
     $(event.currentTarget).closest('.overlay').addClass('hidden');
+  }
+
+  /**
+   * Show target selection modal
+   * @param {Item} item - The weapon or spell item
+   * @param {string} actionType - 'attack' or 'spell'
+   * @param {number|null} range - Range in feet
+   * @param {Object} options - Additional options (isAOE, aoeType, aoeSize)
+   */
+  async _showTargetSelection(item, actionType, range, options = {}) {
+    const { isAOE = false, aoeType = null, aoeSize = null } = options;
+    const actor = this.actor;
+    
+    // Get valid targets
+    let targets = [];
+    if (isAOE && aoeType && aoeSize) {
+      // For AOE, we'll get targets when center is selected
+      // For now, show a different interface
+      await this._showAOETargetSelection(item, actionType, aoeType, aoeSize);
+      return;
+    } else {
+      targets = getValidTargets(actor, range, {
+        includeAllies: false,
+        includeSelf: false
+      });
+    }
+    
+    if (targets.length === 0) {
+      ui.notifications.warn('No valid targets within range!');
+      return;
+    }
+    
+    // Create target selection modal
+    const modal = $(`
+      <div class="target-selection-modal">
+        <div class="modal-header">
+          <h3>Select Target</h3>
+          <button class="modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="modal-content">
+          <p class="target-info">${item.name} - Range: ${range ? range + ' ft' : 'Touch'}</p>
+          <select class="target-select" id="target-select-${item.id}">
+            <option value="">-- Select Target --</option>
+            ${targets.map(t => `
+              <option value="${t.actorId}" data-token-id="${t.tokenId}" data-ac="${t.ac}">
+                ${t.name} (AC ${t.ac}, ${t.distance} ft)
+              </option>
+            `).join('')}
+          </select>
+          <div class="modal-actions">
+            <button class="btn-cancel">Cancel</button>
+            <button class="btn-confirm" data-item-id="${item.id}" data-action-type="${actionType}">Confirm</button>
+          </div>
+        </div>
+      </div>
+    `);
+    
+    // Append to body
+    $('body').append(modal);
+    
+    // Handle close
+    modal.find('.modal-close, .btn-cancel').on('click', () => {
+      modal.remove();
+    });
+    
+    // Handle confirm
+    modal.find('.btn-confirm').on('click', async () => {
+      const select = modal.find('.target-select');
+      const selectedValue = select.val();
+      
+      if (!selectedValue) {
+        ui.notifications.warn('Please select a target');
+        return;
+      }
+      
+      const selectedOption = select.find('option:selected');
+      const targetActorId = selectedValue;
+      const targetTokenId = selectedOption.data('token-id');
+      const targetAC = parseInt(selectedOption.data('ac'), 10);
+      
+      modal.remove();
+      
+      // Execute the attack/spell with target
+      await this._executeTargetedAction(item, actionType, targetActorId, targetTokenId, targetAC);
+    });
+  }
+
+  /**
+   * Show AOE target selection
+   * @param {Item} item - The spell item
+   * @param {string} actionType - 'spell'
+   * @param {string} aoeType - Type of AOE
+   * @param {number} aoeSize - Size in feet
+   */
+  async _showAOETargetSelection(item, actionType, aoeType, aoeSize) {
+    const actor = this.actor;
+    
+    // For AOE, we need to select a center point
+    // This is a simplified version - full implementation would allow clicking on canvas
+    ui.notifications.info('AOE targeting: Select center point on canvas (feature in development)');
+    
+    // For now, use caster's position as center
+    const centerToken = getActorToken(actor);
+    if (!centerToken) {
+      ui.notifications.warn('Caster must be on the canvas for AOE spells');
+      return;
+    }
+    
+    const targets = getAOETargets(actor, centerToken, aoeType, aoeSize, {
+      includeAllies: false,
+      includeSelf: false
+    });
+    
+    if (targets.length === 0) {
+      ui.notifications.warn('No valid targets in AOE area!');
+      return;
+    }
+    
+    // Show AOE target confirmation
+    const confirmed = await new Promise((resolve) => {
+      const modal = $(`
+        <div class="target-selection-modal">
+          <div class="modal-header">
+            <h3>AOE Spell: ${item.name}</h3>
+            <button class="modal-close"><i class="fas fa-times"></i></button>
+          </div>
+          <div class="modal-content">
+            <p class="target-info">${aoeType.toUpperCase()} ${aoeSize} ft - ${targets.length} targets</p>
+            <div class="target-list">
+              ${targets.map(t => `
+                <div class="target-item">
+                  <span>${t.name}</span>
+                  <span>AC ${t.ac}, ${t.distance} ft</span>
+                </div>
+              `).join('')}
+            </div>
+            <div class="modal-actions">
+              <button class="btn-cancel">Cancel</button>
+              <button class="btn-confirm" data-item-id="${item.id}">Cast Spell</button>
+            </div>
+          </div>
+        </div>
+      `);
+      
+      $('body').append(modal);
+      
+      modal.find('.modal-close, .btn-cancel').on('click', () => {
+        modal.remove();
+        resolve(false);
+      });
+      
+      modal.find('.btn-confirm').on('click', () => {
+        modal.remove();
+        resolve(true);
+      });
+    });
+    
+    if (confirmed) {
+      await this._executeAOEAction(item, actionType, targets);
+    }
+  }
+
+  /**
+   * Execute targeted action (attack or spell)
+   * @param {Item} item - The weapon or spell
+   * @param {string} actionType - 'attack' or 'spell'
+   * @param {string} targetActorId - Target actor ID
+   * @param {string} targetTokenId - Target token ID
+   * @param {number} targetAC - Target AC
+   */
+  async _executeTargetedAction(item, actionType, targetActorId, targetTokenId, targetAC) {
+    const actor = this.actor;
+    const targetActor = game.actors.get(targetActorId);
+    
+    if (!targetActor) {
+      ui.notifications.error('Target not found');
+      return;
+    }
+    
+    // For attacks: roll attack, check hit, apply damage
+    if (actionType === 'attack' && item.type === 'weapon') {
+      // Roll attack
+      const attackRoll = new Roll(item.system.attack?.formula || '1d20');
+      await attackRoll.roll();
+      const attackTotal = attackRoll.total + (item.system.attack?.bonus || 0);
+      
+      // Calculate hit
+      const hitResult = calculateHit(attackTotal, targetAC);
+      
+      // Show result in chat
+      const hitMsg = hitResult.hit 
+        ? (hitResult.critical ? 'Critical Hit!' : 'Hit!')
+        : 'Miss!';
+      
+      await ChatMessage.create({
+        user: game.user.id,
+        speaker: { actor: actor.id },
+        content: `
+          <div class="dnd5e chat-card">
+            <header class="card-header flexrow">
+              <h3>${item.name} vs ${targetActor.name}</h3>
+            </header>
+            <div class="card-content">
+              <div class="dice-roll">
+                <div class="dice-result">
+                  <div class="dice-formula">${attackRoll.formula} = ${attackRoll.total}</div>
+                  <h4 class="dice-total">${attackTotal} vs AC ${targetAC}</h4>
+                  <p><strong>${hitMsg}</strong></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        type: CONST.CHAT_MESSAGE_TYPES.OTHER
+      });
+      
+      // If hit, roll damage and apply
+      if (hitResult.hit) {
+        const damageRoll = new Roll(item.system.damage?.parts[0]?.[0] || '1d4');
+        await damageRoll.roll();
+        const damage = hitResult.critical ? damageRoll.total * 2 : damageRoll.total;
+        
+        // Apply damage
+        const damageResult = await applyDamage(targetActor, damage, {
+          damageType: item.system.damage?.parts[0]?.[1] || 'bludgeoning'
+        });
+        
+        await ChatMessage.create({
+          user: game.user.id,
+          speaker: { actor: actor.id },
+          content: `
+            <div class="dnd5e chat-card">
+              <div class="card-content">
+                <p><strong>Damage:</strong> ${damage} ${item.system.damage?.parts[0]?.[1] || 'damage'}</p>
+                <p>${targetActor.name}: ${damageResult.previousHP} → ${damageResult.newHP} HP</p>
+                ${damageResult.isDead ? '<p class="dead"><strong>Target is unconscious!</strong></p>' : ''}
+              </div>
+            </div>
+          `,
+          type: CONST.CHAT_MESSAGE_TYPES.OTHER
+        });
+      }
+    } else if (actionType === 'spell' && item.type === 'spell') {
+      // For spells, use the standard spell.use() but with target info
+      // The spell system will handle the rest
+      const level = item.system.level || 0;
+      if (level > 0) {
+        const slotKey = `spell${level}`;
+        const slots = actor.system.spells[slotKey];
+        if (slots && slots.value > 0) {
+          await actor.update({ [`system.spells.${slotKey}.value`]: slots.value - 1 });
+        } else {
+          ui.notifications.warn('No spell slots remaining!');
+          return;
+        }
+      }
+      
+      // Use spell with target
+      if (typeof item.use === 'function') {
+        // Store target info for the spell to use
+        item._targetActorId = targetActorId;
+        item._targetTokenId = targetTokenId;
+        await item.use();
+      }
+    }
+  }
+
+  /**
+   * Execute AOE action
+   * @param {Item} item - The spell item
+   * @param {string} actionType - 'spell'
+   * @param {Array} targets - Array of target objects
+   */
+  async _executeAOEAction(item, actionType, targets) {
+    const actor = this.actor;
+    
+    // Consume spell slot
+    const level = item.system.level || 0;
+    if (level > 0) {
+      const slotKey = `spell${level}`;
+      const slots = actor.system.spells[slotKey];
+      if (slots && slots.value > 0) {
+        await actor.update({ [`system.spells.${slotKey}.value`]: slots.value - 1 });
+      } else {
+        ui.notifications.warn('No spell slots remaining!');
+        return;
+      }
+    }
+    
+    // This will be handled by the AOE system (see AOE solutions document)
+    ui.notifications.info(`AOE spell cast on ${targets.length} targets`);
+    
+    // Store targets for AOE processing
+    item._aoETargets = targets;
+    
+    if (typeof item.use === 'function') {
+      await item.use();
+    }
   }
 }
 

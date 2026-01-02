@@ -5,6 +5,7 @@
 
 import { handleSyncError } from './utils.js';
 import { sendActor } from './sync-core.js';
+import { getValidTargets, parseRange, calculateHit, applyDamage, getAOETargets, calculateSavingThrow, getActorToken } from './targeting.js';
 
 const MODULE_ID = '5eMobile';
 
@@ -613,6 +614,232 @@ export async function handleCharacterDataUpdate(action) {
 }
 
 /**
+ * Handle targeted attack request
+ * @param {Object} action - Attack action with target
+ * @returns {Promise<Object>} Result object
+ */
+export async function handleTargetedAttack(action) {
+  try {
+    const validation = validateActionData(action);
+    if (!validation.valid) {
+      throw new Error(validation.error);
+    }
+
+    const { characterId, itemId, targetActorId, targetTokenId, attackRoll, options = {} } = action;
+    const attacker = game.actors.get(characterId);
+    const targetActor = game.actors.get(targetActorId);
+    
+    if (!attacker || !targetActor) {
+      throw new Error('Attacker or target not found');
+    }
+
+    const item = attacker.items.get(itemId);
+    if (!item || item.type !== 'weapon') {
+      throw new Error('Weapon not found');
+    }
+
+    // Get target AC
+    const targetAC = targetActor.system.attributes.ac.value || 10;
+    
+    // Calculate hit (attackRoll should already include modifiers)
+    const hitResult = calculateHit(attackRoll, targetAC, options);
+    
+    let damageResult = null;
+    if (hitResult.hit) {
+      // Roll damage
+      const damageFormula = item.system.damage?.parts[0]?.[0] || '1d4';
+      const damageRoll = new Roll(damageFormula);
+      await damageRoll.roll();
+      
+      let damage = damageRoll.total;
+      if (hitResult.critical) {
+        damage = damage * 2; // Critical hit doubles damage
+      }
+      
+      // Apply damage
+      damageResult = await applyDamage(targetActor, damage, {
+        damageType: item.system.damage?.parts[0]?.[1] || 'bludgeoning'
+      });
+    }
+
+    // Create chat message
+    const hitMsg = hitResult.hit 
+      ? (hitResult.critical ? 'Critical Hit!' : 'Hit!')
+      : 'Miss!';
+    
+    await ChatMessage.create({
+      user: game.user.id,
+      speaker: { actor: attacker.id },
+      content: `
+        <div class="dnd5e chat-card">
+          <header class="card-header flexrow">
+            <h3>${item.name} vs ${targetActor.name}</h3>
+          </header>
+          <div class="card-content">
+            <div class="dice-roll">
+              <div class="dice-result">
+                <div class="dice-formula">Attack: ${attackRoll} vs AC ${targetAC}</div>
+                <h4 class="dice-total">${hitMsg}</h4>
+                ${damageResult ? `
+                  <p><strong>Damage:</strong> ${damageResult.damage}</p>
+                  <p>${targetActor.name}: ${damageResult.previousHP} → ${damageResult.newHP} HP</p>
+                  ${damageResult.isDead ? '<p class="dead"><strong>Target is unconscious!</strong></p>' : ''}
+                ` : ''}
+              </div>
+            </div>
+          </div>
+        </div>
+      `,
+      type: CONST.CHAT_MESSAGE_TYPES.OTHER
+    });
+
+    // Sync both actors
+    sendActor(attacker);
+    sendActor(targetActor);
+
+    return {
+      success: true,
+      hit: hitResult.hit,
+      critical: hitResult.critical,
+      damage: damageResult?.damage || 0,
+      targetHP: damageResult?.newHP || targetActor.system.attributes.hp.value
+    };
+  } catch (error) {
+    const errorInfo = handleSyncError(error, {
+      characterId: action.characterId,
+      actionType: 'targeted-attack'
+    });
+    return {
+      success: false,
+      error: errorInfo.message
+    };
+  }
+}
+
+/**
+ * Handle get targets request
+ * @param {Object} action - Get targets action
+ * @returns {Promise<Object>} Result object with targets
+ */
+export async function handleGetTargets(action) {
+  try {
+    const validation = validateActionData(action);
+    if (!validation.valid) {
+      throw new Error(validation.error);
+    }
+
+    const { characterId, range, itemId, options = {} } = action;
+    const actor = game.actors.get(characterId);
+    
+    if (!actor) {
+      throw new Error('Character not found');
+    }
+
+    // Parse range if it's a string
+    const rangeFeet = typeof range === 'string' ? parseRange(range) : range;
+    
+    // Get valid targets
+    const targets = getValidTargets(actor, rangeFeet, {
+      includeAllies: options.includeAllies || false,
+      includeSelf: options.includeSelf || false
+    });
+
+    // Format targets for response (don't send full token/actor objects)
+    const formattedTargets = targets.map(t => ({
+      actorId: t.actorId,
+      tokenId: t.tokenId,
+      name: t.name,
+      distance: t.distance,
+      ac: t.ac
+    }));
+
+    return {
+      success: true,
+      targets: formattedTargets
+    };
+  } catch (error) {
+    const errorInfo = handleSyncError(error, {
+      characterId: action.characterId,
+      actionType: 'get-targets'
+    });
+    return {
+      success: false,
+      error: errorInfo.message,
+      targets: []
+    };
+  }
+}
+
+/**
+ * Handle AOE spell request
+ * @param {Object} action - AOE spell action
+ * @returns {Promise<Object>} Result object
+ */
+export async function handleAOESpell(action) {
+  try {
+    const validation = validateActionData(action);
+    if (!validation.valid) {
+      throw new Error(validation.error);
+    }
+
+    const { characterId, itemId, aoeType, aoeSize, centerTokenId, options = {} } = action;
+    const caster = game.actors.get(characterId);
+    
+    if (!caster) {
+      throw new Error('Caster not found');
+    }
+
+    // Get center token
+    const centerToken = centerTokenId 
+      ? canvas.tokens.get(centerTokenId)
+      : getActorToken(caster);
+    
+    if (!centerToken) {
+      throw new Error('Center token not found');
+    }
+
+    // Get AOE targets
+    const targets = getAOETargets(caster, centerToken, aoeType, aoeSize, {
+      includeAllies: options.includeAllies || false,
+      includeSelf: options.includeSelf || false
+    });
+
+    if (targets.length === 0) {
+      return {
+        success: true,
+        targets: [],
+        message: 'No targets in AOE area'
+      };
+    }
+
+    // Format targets for response
+    const formattedTargets = targets.map(t => ({
+      actorId: t.actorId,
+      tokenId: t.tokenId,
+      name: t.name,
+      distance: t.distance,
+      ac: t.ac
+    }));
+
+    return {
+      success: true,
+      targets: formattedTargets,
+      count: targets.length
+    };
+  } catch (error) {
+    const errorInfo = handleSyncError(error, {
+      characterId: action.characterId,
+      actionType: 'aoe-spell'
+    });
+    return {
+      success: false,
+      error: errorInfo.message,
+      targets: []
+    };
+  }
+}
+
+/**
  * Action handler map for routing actions
  */
 export const actionHandlers = {
@@ -624,6 +851,9 @@ export const actionHandlers = {
   'compendium-request': handleCompendiumRequest,
   'level-up': handleLevelUp,
   'add-item': handleAddItem,
-  'update-character-data': handleCharacterDataUpdate
+  'update-character-data': handleCharacterDataUpdate,
+  'targeted-attack': handleTargetedAttack,
+  'get-targets': handleGetTargets,
+  'aoe-spell': handleAOESpell
 };
 
