@@ -1,11 +1,15 @@
 # Build artifacts
 build/
 dist/
+# Exclude all zip files (created during build process)
 *.zip
-5eMobile.zip
 
 # Dependencies
 node_modules/
+
+# Documentation (exclude README.md as it's needed for distribution)
+*.md
+!README.md
 
 # IDE
 .vscode/
