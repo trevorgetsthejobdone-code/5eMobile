@@ -2,8 +2,8 @@
   "id": "5eMobile",
   "title": "5eMobile",
   "version": "0.2.0",
-  "description": "Mobile-first character sheet for D&D 5e with split-pane 'Open Book' interface",
-  "manifest": "https://github.com/yourusername/5eMobile/releases/latest/download/module.json",
+  "description": "Action-Oriented mobile-first character sheet for D&D 5e",
+  "manifest": "https://github.com/trevorgetsthejobdone-code/5eMobile/edit/main/module.json",
   "esmodules": [
     "scripts/main.js"
   ],
@@ -30,7 +30,7 @@
   },
   "authors": [
     {
-      "name": "Tactician",
+      "name": "TacticalTrevor",
       "url": "https://example.com"
     }
   ],
