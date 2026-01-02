@@ -46,26 +46,42 @@ function registerMobileSheet() {
       return;
     }
 
-    // Register mobile sheet for character actors
-    const DocumentSheetConfig = foundry.applications.apps.DocumentSheetConfig;
-    
-    if (!DocumentSheetConfig) {
-      console.error('5eMobile: DocumentSheetConfig not found');
-      return;
-    }
-
     if (!MobileActorSheet5e) {
       console.error('5eMobile: MobileActorSheet5e class not found');
       return;
     }
 
-    DocumentSheetConfig.registerSheet(Actor, MODULE_ID, MobileActorSheet5e, {
-      types: ['character'],
-      makeDefault: false,
-      label: '5eMobile Sheet'
-    });
-
-    console.log('5eMobile: Sheet registered successfully');
+    // Use Foundry v11+ sheet registration API
+    // For v11+, use Actors.registerSheet with system ID
+    if (Actors?.registerSheet) {
+      Actors.registerSheet('dnd5e', MobileActorSheet5e, {
+        types: ['character'],
+        makeDefault: false,
+        label: '5eMobile Sheet'
+      });
+      console.log('5eMobile: Sheet registered successfully using Actors.registerSheet');
+    } 
+    // Fallback for v10: use DocumentSheetConfig
+    else if (foundry.applications?.apps?.DocumentSheetConfig) {
+      const DocumentSheetConfig = foundry.applications.apps.DocumentSheetConfig;
+      DocumentSheetConfig.registerSheet(Actor, MODULE_ID, MobileActorSheet5e, {
+        types: ['character'],
+        makeDefault: false,
+        label: '5eMobile Sheet'
+      });
+      console.log('5eMobile: Sheet registered successfully using DocumentSheetConfig');
+    } 
+    // Last resort: direct CONFIG registration (v9/v10)
+    else if (CONFIG?.Actor?.sheetClasses) {
+      console.warn('5eMobile: Using fallback sheet registration method');
+      if (!CONFIG.Actor.sheetClasses.character) {
+        CONFIG.Actor.sheetClasses.character = {};
+      }
+      CONFIG.Actor.sheetClasses.character[`${MODULE_ID}.MobileActorSheet5e`] = MobileActorSheet5e;
+      console.log('5eMobile: Sheet registered successfully using CONFIG fallback');
+    } else {
+      console.error('5eMobile: No valid sheet registration method found');
+    }
   } catch (error) {
     console.error('5eMobile: Error registering sheet:', error);
     console.error(error.stack);
@@ -162,12 +178,18 @@ Hooks.once('init', async () => {
 
 // Register sheet and setup hooks on ready (after dnd5e system is loaded)
 Hooks.once('ready', () => {
+  console.log('5eMobile: Ready hook fired');
+  console.log('5eMobile: dnd5e available?', typeof dnd5e !== 'undefined');
+  console.log('5eMobile: CharacterActorSheet available?', !!dnd5e?.applications?.actor?.CharacterActorSheet);
+  console.log('5eMobile: Actors.registerSheet available?', !!Actors?.registerSheet);
+  console.log('5eMobile: MobileActorSheet5e class?', typeof MobileActorSheet5e);
+  
   // Small delay to ensure dnd5e is fully ready
   setTimeout(() => {
     registerMobileSheet();
     autoSwitchToMobileSheet();
     setupUISuppression();
     console.log('5eMobile: Module ready and hooks set up');
-  }, 100);
+  }, 500); // Increased delay to ensure everything is loaded
 });
 

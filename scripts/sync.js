@@ -26,6 +26,20 @@ import {
   handleCombatAction
 } from './sync-combat.js';
 
+// Import WebSocket function (with fallback)
+let sendWebSocketFn = null;
+async function getSendWebSocket() {
+  if (sendWebSocketFn === null) {
+    try {
+      const wsModule = await import('./sync-websocket.js');
+      sendWebSocketFn = wsModule.sendWebSocket || (() => false);
+    } catch (error) {
+      sendWebSocketFn = () => false; // Fallback if WebSocket module doesn't exist
+    }
+  }
+  return sendWebSocketFn;
+}
+
 const MODULE_ID = '5eMobile';
 
 /**
@@ -406,7 +420,7 @@ function startActionPolling() {
               characterId: action.characterId,
               restType: action.restType
             });
-          } else           if (action.type === 'character-update') {
+          } else if (action.type === 'character-update') {
             // Extract update data
             result = await handleCharacterUpdate({
               characterId: action.characterId,
@@ -452,6 +466,7 @@ function startActionPolling() {
             };
             
             // Try WebSocket first, fall back to HTTP
+            const sendWebSocket = await getSendWebSocket();
             if (!sendWebSocket(resultData)) {
               await fetch(`${syncUrl}/api/action-result`, {
                 method: 'POST',
@@ -474,6 +489,7 @@ function startActionPolling() {
           };
           
           // Try WebSocket first, fall back to HTTP
+          const sendWebSocket = await getSendWebSocket();
           if (!sendWebSocket(errorResult)) {
             await fetch(`${syncUrl}/api/action-result`, {
               method: 'POST',
@@ -487,30 +503,7 @@ function startActionPolling() {
       // Silently fail - Electron app might not be running
       // console.debug(`[${MODULE_ID}] Polling error (expected if Electron app not running):`, error.message);
     }
-    
-    // Adaptive polling: adjust interval based on activity
-    const hadActions = data?.actions?.length > 0;
-    if (hadActions) {
-      consecutiveActivePolls++;
-      consecutiveEmptyPolls = 0;
-      // Speed up if we're getting actions
-      if (consecutiveActivePolls >= MAX_ACTIVE_POLLS && currentPollingInterval > MIN_POLL_INTERVAL) {
-        currentPollingInterval = Math.max(MIN_POLL_INTERVAL, currentPollingInterval - POLL_INTERVAL_STEP);
-        consecutiveActivePolls = 0;
-      }
-    } else {
-      consecutiveEmptyPolls++;
-      consecutiveActivePolls = 0;
-      // Slow down if no actions
-      if (consecutiveEmptyPolls >= MAX_EMPTY_POLLS && currentPollingInterval < MAX_POLL_INTERVAL) {
-        currentPollingInterval = Math.min(MAX_POLL_INTERVAL, currentPollingInterval + POLL_INTERVAL_STEP);
-        consecutiveEmptyPolls = 0;
-      }
-    }
-    
-    // Schedule next poll
-    setTimeout(poll, currentPollingInterval);
-  };
+  }, pollingIntervalMs);
 }
 
 /**
@@ -532,6 +525,7 @@ async function processActions(actions, syncUrl) {
         };
         
         // Try WebSocket first, fall back to HTTP
+        const sendWebSocket = await getSendWebSocket();
         if (!sendWebSocket({ type: 'action-result', ...errorResult })) {
           await fetch(`${syncUrl}/api/action-result`, {
             method: 'POST',
@@ -542,7 +536,16 @@ async function processActions(actions, syncUrl) {
         continue; // Skip this action
       }
       
-      let result = null;
+      // Process action (handled in startActionPolling above)
+      // This function is kept for potential future use
+    } catch (error) {
+      handleSyncError(error, {
+        actionType: 'process-action',
+        actionId: action.actionId
+      });
+    }
+  }
+}
 
 function stopActionPolling() {
   // Reset adaptive polling state
